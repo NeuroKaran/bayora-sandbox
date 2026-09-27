@@ -56,6 +56,8 @@ services:
       - OLLAMA_URL=${OLLAMA_URL:-http://client-llm:11434/api/generate}
       - MODEL_NAME=${MODEL_NAME:-qwen2.5-coder:3b}
       - BAYORA_AUDIT_LOG=${BAYORA_AUDIT_LOG:-/app/audit/log.jsonl}
+      - REDTEAM_API_KEY=${REDTEAM_API_KEY:-bayora-redteam-live-secret-key-9f8a2}
+      - BLUETEAM_API_KEY=${BLUETEAM_API_KEY:-bayora-blueteam-live-secret-key-3c7d1}
     volumes:
       - ./audit:/app/audit
     networks:
@@ -77,6 +79,9 @@ services:
     restart: unless-stopped
     user: "10001:10001"
     read_only: true
+    environment:
+      - GATEWAY_URL=http://llm-gateway:8000
+      - X_TENANT_KEY=${REDTEAM_API_KEY:-bayora-redteam-live-secret-key-9f8a2}
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
       - /run:rw,noexec,nosuid,size=16m
@@ -109,6 +114,9 @@ services:
     restart: unless-stopped
     user: "10001:10001"
     read_only: true
+    environment:
+      - GATEWAY_URL=http://llm-gateway:8000
+      - X_TENANT_KEY=${BLUETEAM_API_KEY:-bayora-blueteam-live-secret-key-3c7d1}
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=64m
       - /run:rw,noexec,nosuid,size=16m

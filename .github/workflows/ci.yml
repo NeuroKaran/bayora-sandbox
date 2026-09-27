@@ -1,0 +1,56 @@
+name: Bayora Sandbox CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-verify:
+    name: Unit Tests, Isolation Checks & Audit Verification
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Syntax & Compilation Check
+        run: |
+          python -m py_compile gateway/main.py audit/chain.py audit/verify.py attacks/run-attack.py
+
+      - name: Run Complete Test Suite (Audit, Gateway, Isolation, Attacks)
+        run: |
+          python -c "
+          import unittest, sys
+          loader = unittest.TestLoader()
+          suite = unittest.TestSuite()
+          for d in ['audit', 'gateway', 'isolation', 'attacks']:
+              suite.addTests(loader.discover(d, pattern='test_*.py', top_level_dir='.'))
+          runner = unittest.TextTestRunner(verbosity=2)
+          result = runner.run(suite)
+          if not result.wasSuccessful():
+              sys.exit(1)
+          "
+
+      - name: Verify Tamper Detection CLI
+        run: |
+          python audit/verify.py
+
+      - name: Validate Seccomp Profiles & Docker Compose Spec
+        run: |
+          python -m unittest isolation/test_isolation.py

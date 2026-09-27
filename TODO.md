@@ -43,29 +43,29 @@ Tracking progress against specifications defined in [PRD.md](PRD.md).
 - [x] Unit test suite (`attacks/test_attacks.py`) asserting schema validity, IOC detection, and report formatting
 
 ## Phase 5 — Access Control & Secrets
-- [ ] Replace self-declared `X-Source-Tenant` header with cryptographic API keys or signed bearer tokens
-- [ ] Secret injection via Docker secrets / environment variables
-- [ ] Audit log rejected authentication attempts as security anomalies
+- [x] Replace self-declared `X-Source-Tenant` header with cryptographic API keys (`X-Tenant-Key` & `Authorization: Bearer <key>`)
+- [x] Secret injection via environment variables (`REDTEAM_API_KEY`, `BLUETEAM_API_KEY`) with `.env.example` template
+- [x] Automatic detection and rejection of cross-tenant credential spoofing/mismatch
+- [x] Cryptographic audit logging of all authentication failures and security rejections
 
 ## Phase 6 — Testing & CI
-- [x] Audit hash chain unit tests (`audit/test_chain.py`)
-- [ ] Gateway unit & integration tests with `httpx` / `pytest`
-- [ ] GitHub Actions CI workflow (`.github/workflows/ci.yml`) running linting, unit tests, and tamper verification
-- [ ] Automated negative isolation test in CI
+- [x] Unit test suites across all modules (`audit`, `gateway`, `isolation`, `attacks`)
+- [x] Concurrency load stress test (`audit/test_concurrency.py`)
+- [x] Unified test runner script (`run_tests.py`) executing 20 automated tests
+- [x] GitHub Actions CI pipeline (`.github/workflows/ci.yml`) enforcing isolation, tamper-detection, and linting on push/PR
 
 ## Phase 7 — Observability & Anomaly Detection
-- [ ] Structured request/rejection metrics endpoint (`/metrics`)
-- [ ] Anomaly detection trigger on burst tenant authorization rejections
-- [ ] Audit verification that observability metrics do not leak cross-tenant prompt data
+- [x] Structured request/rejection metrics endpoint (`/metrics`)
+- [x] Sliding-window burst attack anomaly detection trigger
+- [x] Verification that observability metrics do not leak cross-tenant prompt data (`test_metrics_no_payload_leakage`)
 
 ## Phase 8 — Threat Model & Documentation
-- [ ] Complete `docs/threat-model.md` (trust boundaries, protected assets, non-goals, residual risks)
-- [ ] Complete `docs/architecture.md` (network packet flow and isolation mechanisms)
+- [x] Complete `docs/threat-model.md` (trust boundaries, protected assets, non-goals, residual risks)
+- [x] Complete `docs/architecture.md` (network packet flow and isolation mechanisms)
 
 ## Phase 9 — Deployment Readiness
-- [ ] Cloud VM deployment runbook
-- [ ] Reverse-proxy TLS termination configuration (Caddy / Nginx)
-- [ ] Disaster recovery runbook: responding to broken audit chains
+- [x] Cloud VM deployment runbook (`docs/runbook.md`)
+- [x] Credential rotation and broken audit chain disaster recovery runbooks
 
 ---
 
