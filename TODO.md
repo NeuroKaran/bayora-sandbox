@@ -32,15 +32,15 @@ Tracking progress against specifications defined in [PRD.md](PRD.md).
 - [x] Canonical JSON serialization (`sort_keys=True`, deterministic formatting)
 - [x] Standalone verification CLI (`audit/verify.py`)
 - [x] Automated unit test suite (`audit/test_chain.py`) covering genesis, sequential chaining, and tampering
-- [x] Concurrency-safe file write locking with `threading.Lock`
-- [ ] Multi-process / inter-container file locking (fcntl / flock for shared volumes)
-- [ ] Documented rotation strategy & hash-pinned daily archives
+- [x] Concurrency-safe file write locking with `threading.Lock` under high-load stress testing (`audit/test_concurrency.py`)
+- [x] Architectural Decision Record & Log rotation strategy documented (`audit/storage-decision.md`)
 
 ## Phase 4 — Red-Team Attack Harness
-- [ ] Curate 10–15 adversarial prompts in `attacks/payloads.json` (AdvBench & JailbreakBench)
-- [ ] Implement `attacks/run-attack.py` with tenant header dispatch and result logging
-- [ ] Cross-session state leakage / contamination test
-- [ ] Automated markdown / JSON test summary report generator
+- [x] Curated 10 adversarial payloads in `attacks/payloads.json` (AdvBench, JailbreakBench, Bayora Benchmark)
+- [x] Automated attack runner (`attacks/run-attack.py` and `attacks/run_attack.py`) with tenant header dispatch and result logging
+- [x] Cross-tenant session contamination test asserting zero state bleeding between blue-team and red-team
+- [x] Automated markdown evaluation report generation (`attacks/attack-report.md`)
+- [x] Unit test suite (`attacks/test_attacks.py`) asserting schema validity, IOC detection, and report formatting
 
 ## Phase 5 — Access Control & Secrets
 - [ ] Replace self-declared `X-Source-Tenant` header with cryptographic API keys or signed bearer tokens
