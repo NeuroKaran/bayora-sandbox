@@ -1,0 +1,36 @@
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & Audit Trail (retain gitkeep or schema, ignore runtime logs)
+audit/log.jsonl
+audit/*.chain
+*.log
+isolation/logs/
+
+# Ollama Data Volume
+ollama-data/
+
+# Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

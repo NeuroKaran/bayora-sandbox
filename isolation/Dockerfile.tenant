@@ -1,0 +1,35 @@
+# ==============================================================================
+# Bayora Sandbox - Hardened Non-Root Tenant Workload Container
+# Used for isolated Red-Team attack runner and Blue-Team defense evaluation
+# ==============================================================================
+FROM alpine:3.20
+
+# Install minimal networking, curl, and python3 tools for evaluation
+RUN apk update && apk add --no-cache \
+    python3 \
+    py3-pip \
+    bash \
+    curl \
+    jq \
+    iputils \
+    netcat-openbsd \
+    coreutils \
+    ca-certificates \
+    && rm -rf /var/cache/apk/*
+
+# Create unprivileged sandbox user (UID 10001)
+RUN addgroup -g 10001 sandboxgroup && \
+    adduser -u 10001 -G sandboxgroup -s /bin/bash -D sandboxuser
+
+# Strip SUID and SGID permissions across rootfs to prevent privilege escalation
+RUN find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
+
+WORKDIR /home/sandboxuser/workspace
+RUN chown -R sandboxuser:sandboxgroup /home/sandboxuser
+
+USER 10001:10001
+
+ENV PYTHONUNBUFFERED=1 \
+    PATH="/usr/local/bin:/usr/bin:/bin"
+
+CMD ["/bin/sh", "-c", "echo 'Tenant container active and isolated. Standing by...' && sleep infinity"]

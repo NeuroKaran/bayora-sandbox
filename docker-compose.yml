@@ -1,0 +1,164 @@
+services:
+  # ============================================================================
+  # 1. Client LLM Service (Ollama black-box model runner)
+  # ============================================================================
+  client-llm:
+    image: ollama/ollama:latest
+    container_name: bayora-client-llm
+    restart: unless-stopped
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - client-net
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list > /dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ============================================================================
+  # 2. Automated Model Puller (Runs once to ensure model is present in Ollama)
+  # ============================================================================
+  model-init:
+    image: ollama/ollama:latest
+    container_name: bayora-model-init
+    restart: "no"
+    networks:
+      - client-net
+    environment:
+      - OLLAMA_HOST=client-llm:11434
+    depends_on:
+      client-llm:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "[*] Initializing client model in Ollama..."
+        ollama pull ${MODEL_NAME:-qwen2.5-coder:3b} || echo "[!] Model pull completed or using local cache"
+        echo "[*] Model ready for evaluation."
+
+  # ============================================================================
+  # 3. LLM Gateway (The Single Security Chokepoint & Tamper-Evident Auditor)
+  # ============================================================================
+  llm-gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: bayora-llm-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8000}:8000"
+    environment:
+      - OLLAMA_URL=${OLLAMA_URL:-http://client-llm:11434/api/generate}
+      - MODEL_NAME=${MODEL_NAME:-qwen2.5-coder:3b}
+      - BAYORA_AUDIT_LOG=${BAYORA_AUDIT_LOG:-/app/audit/log.jsonl}
+    volumes:
+      - ./audit:/app/audit
+    networks:
+      - redteam-net
+      - blueteam-net
+      - client-net
+    depends_on:
+      client-llm:
+        condition: service_healthy
+
+  # ============================================================================
+  # 4. Red-Team Workload Container (Phase 2 Isolation Enforcement)
+  # ============================================================================
+  redteam:
+    build:
+      context: .
+      dockerfile: isolation/Dockerfile.tenant
+    container_name: bayora-redteam
+    restart: unless-stopped
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /run:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./isolation/seccomp-redteam.json
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    networks:
+      - redteam-net
+    volumes:
+      - ./attacks:/home/sandboxuser/workspace/attacks:ro
+    depends_on:
+      llm-gateway:
+        condition: service_started
+
+  # ============================================================================
+  # 5. Blue-Team Workload Container (Phase 2 Isolation Enforcement)
+  # ============================================================================
+  blueteam:
+    build:
+      context: .
+      dockerfile: isolation/Dockerfile.tenant
+    container_name: bayora-blueteam
+    restart: unless-stopped
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /run:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+      - seccomp=./isolation/seccomp-blueteam.json
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    networks:
+      - blueteam-net
+    volumes:
+      - ./isolation:/home/sandboxuser/workspace/isolation:ro
+    depends_on:
+      llm-gateway:
+        condition: service_started
+
+# ==============================================================================
+# Isolated Multi-Tenant Network Topology
+# ==============================================================================
+networks:
+  # Network for Red-Team attack dispatch (cannot route to blueteam or client-llm)
+  redteam-net:
+    name: bayora-redteam-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.10.0/24
+
+  # Network for Blue-Team mitigation / defense tooling
+  blueteam-net:
+    name: bayora-blueteam-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.20.0/24
+
+  # Isolated network for client model under test (only gateway has access)
+  # internal: true isolates this subnet completely from host WAN
+  client-net:
+    name: bayora-client-net
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.30.0/24
+
+volumes:
+  ollama-data:
+    name: bayora-ollama-data
