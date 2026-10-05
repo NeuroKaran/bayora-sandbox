@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bayora Sandbox // Real-Time AI Isolation & Security Intermediary</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-cyan"></div>
+  <div class="ambient-glow glow-red"></div>
+  <div class="ambient-glow glow-blue"></div>
+
+  <!-- Top App Navigation Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        <span class="brand-title">BAYORA<span class="brand-highlight">.SANDBOX</span></span>
+      </div>
+      <div class="system-status-pill" id="system-status-pill">
+        <span class="pulse-indicator healthy" id="pulse-dot"></span>
+        <span class="status-text" id="system-status-text">SYSTEM ACTIVE</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="tab-overview">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Live Telemetry
+        </button>
+        <button class="nav-tab" data-tab="tab-audit">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+          Audit Hash-Chain
+          <span class="badge" id="blocks-count-badge">0</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-attacks">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Adversarial Suite
+        </button>
+        <button class="nav-tab" data-tab="tab-topology">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          Security Topology
+        </button>
+        <button class="nav-tab" data-tab="tab-terminal">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Live Dispatch
+        </button>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <div class="refresh-controls">
+        <label class="toggle-switch" title="Auto-refresh every 2.5 seconds">
+          <input type="checkbox" id="auto-refresh-toggle" checked>
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Auto-Poll</span>
+        <button class="btn-icon" id="btn-manual-refresh" title="Refresh Now">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+        </button>
+      </div>
+      <div class="last-sync-tag" id="last-sync-time">Sync: just now</div>
+    </div>
+  </header>
+
+  <!-- Anomaly Alert Banner (Appears on burst intrusion / chain tamper) -->
+  <div class="anomaly-banner hidden" id="anomaly-alert-banner">
+    <div class="anomaly-banner-content">
+      <div class="anomaly-icon-wrap">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+      </div>
+      <div class="anomaly-text">
+        <strong id="anomaly-title">SECURITY ANOMALY DETECTED</strong>
+        <p id="anomaly-details">High burst of unauthorized cross-tenant attempts detected across security chokepoints.</p>
+      </div>
+    </div>
+    <div class="anomaly-banner-action">
+      <button class="btn-action-small" id="btn-inspect-anomaly">Inspect Events</button>
+    </div>
+  </div>
+
+  <!-- Main View Container -->
+  <main class="app-main">
+    
+    <!-- ==================== TAB 1: OVERVIEW / TELEMETRY ==================== -->
+    <section class="tab-pane active" id="tab-overview">
+      <!-- High-level KPI Metric Cards -->
+      <div class="metrics-grid">
+        <div class="card metric-card">
+          <div class="metric-header">
+            <span class="metric-label">TOTAL REQUESTS</span>
+            <span class="metric-badge cyan">Gateway</span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metric-total-requests">0</span>
+            <span class="metric-trend text-cyan">All Tenants</span>
+          </div>
+          <div class="metric-subtext">
+            <span>Red: <strong id="metric-red-reqs">0</strong></span>
+            <span>Blue: <strong id="metric-blue-reqs">0</strong></span>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="metric-header">
+            <span class="metric-label">CONTAINED REJECTIONS</span>
+            <span class="metric-badge red">Blocked</span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number text-red" id="metric-total-rejections">0</span>
+            <span class="metric-trend text-red" id="metric-rejection-rate">0% reject rate</span>
+          </div>
+          <div class="metric-subtext">
+            <span>Last 60s: <strong id="metric-rejections-60s">0</strong></span>
+            <span>Anomaly Alert: <strong id="metric-anomaly-status">NORMAL</strong></span>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="metric-header">
+            <span class="metric-label">HASH-CHAIN INTEGRITY</span>
+            <span class="metric-badge green" id="metric-chain-badge">SHA-256</span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number text-green" id="metric-chain-blocks">0</span>
+            <span class="metric-trend text-green" id="metric-chain-status">Verified 100%</span>
+          </div>
+          <div class="metric-subtext">
+            <span>Tamper Detection: <strong>Zero Tampering</strong></span>
+            <span>Append-only JSONL</span>
+          </div>
+        </div>
+
+        <div class="card metric-card">
+          <div class="metric-header">
+            <span class="metric-label">AVG LATENCY</span>
+            <span class="metric-badge yellow">Per Inference</span>
+          </div>
+          <div class="metric-value-row">
+            <span class="metric-number" id="metric-avg-latency">0.00s</span>
+            <span class="metric-trend text-yellow" id="metric-model-name">qwen2.5-coder:3b</span>
+          </div>
+          <div class="metric-subtext">
+            <span>Red: <strong id="metric-red-lat">0.00s</strong></span>
+            <span>Blue: <strong id="metric-blue-lat">0.00s</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Activity Feed & Rejection Breakdown -->
+      <div class="content-split-grid">
+        <!-- Live Audit Activity Stream -->
+        <div class="card stream-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+              <h3>Live Security Audit Stream</h3>
+            </div>
+            <div class="card-controls">
+              <span class="stream-live-tag"><span class="dot-live"></span>STREAMING</span>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-container">
+              <table class="data-table" id="stream-table">
+                <thead>
+                  <tr>
+                    <th>Index</th>
+                    <th>Timestamp</th>
+                    <th>Tenant</th>
+                    <th>Status</th>
+                    <th>SHA-256 Hash</th>
+                    <th>Latency</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="stream-table-body">
+                  <tr>
+                    <td colspan="7" class="empty-state">Loading real-time audit entries...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Threat & Rejections Breakdown -->
+        <div class="card side-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <h3>Enforcement Telemetry</h3>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="stats-list">
+              <div class="stat-item">
+                <span class="stat-label">Model Endpoint</span>
+                <span class="stat-val font-mono" id="stat-model-endpoint">http://client-llm:11434</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Allowed Tenants</span>
+                <span class="stat-val font-mono text-cyan">red-team, blue-team</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Cryptographic Auth</span>
+                <span class="stat-val font-mono text-green">X-Tenant-Key / Bearer</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Tamper-Proof Storage</span>
+                <span class="stat-val font-mono">audit/log.jsonl</span>
+              </div>
+            </div>
+
+            <div class="section-divider"></div>
+            <h4 class="subheading">Rejection Reasons Distribution</h4>
+            <div class="rejection-distribution" id="rejection-distribution-list">
+              <div class="empty-hint">No security rejections logged yet. System operating normally.</div>
+            </div>
+
+            <div class="section-divider"></div>
+            <h4 class="subheading">Tenant Activity Proportion</h4>
+            <div class="progress-stacked">
+              <div class="progress-bar red-fill" id="ratio-red-bar" style="width: 50%" title="Red-Team Activity"></div>
+              <div class="progress-bar blue-fill" id="ratio-blue-bar" style="width: 50%" title="Blue-Team Activity"></div>
+            </div>
+            <div class="ratio-legend">
+              <span><span class="legend-dot red-fill"></span> Red-Team (<span id="ratio-red-pct">50%</span>)</span>
+              <span><span class="legend-dot blue-fill"></span> Blue-Team (<span id="ratio-blue-pct">50%</span>)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: AUDIT HASH-CHAIN ==================== -->
+    <section class="tab-pane" id="tab-audit">
+      <div class="audit-chain-view">
+        <div class="chain-header-banner card">
+          <div class="chain-meta-left">
+            <div class="chain-status-indicator" id="chain-integrity-pill">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span id="chain-verification-message">CRYPTOGRAPHIC CHAIN VERIFIED</span>
+            </div>
+            <p class="chain-explanation">
+              Every request dispatched to the model is committed to this immutable SHA-256 hash-chain <em>before</em> returning to the client. Modifying any past block immediately invalidates all successor hashes.
+            </p>
+          </div>
+          <div class="chain-actions">
+            <button class="btn-primary" id="btn-run-verify-chain">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              Verify All Blocks
+            </button>
+            <button class="btn-secondary" id="btn-export-log" title="Download log.jsonl">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              Export JSONL
+            </button>
+          </div>
+        </div>
+
+        <div class="blocks-visualizer-container">
+          <div class="blocks-filter-bar">
+            <div class="search-input-wrap">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+              <input type="text" id="audit-filter-input" placeholder="Search by index, hash, tenant, prompt snippet...">
+            </div>
+            <div class="filter-pills">
+              <button class="filter-pill active" data-filter="all">All Entries</button>
+              <button class="filter-pill" data-filter="red-team">Red-Team</button>
+              <button class="filter-pill" data-filter="blue-team">Blue-Team</button>
+              <button class="filter-pill" data-filter="rejected">Rejections</button>
+            </div>
+          </div>
+
+          <!-- Chronological Hash Chain Feed with Link Connectors -->
+          <div class="chain-timeline" id="chain-blocks-timeline">
+            <!-- Dynamically populated blocks -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: ADVERSARIAL ATTACK SUITE ==================== -->
+    <section class="tab-pane" id="tab-attacks">
+      <div class="attacks-view">
+        <div class="attacks-banner card">
+          <div class="attacks-banner-text">
+            <h3>Adversarial Red-Team Benchmark & Containment Suite</h3>
+            <p>
+              Pre-curated adversarial payloads sourced from AdvBench & JailbreakBench. Tests jailbreaks, prompt leaks, SSRF, shell injection, and cross-session contamination against the isolated model sandbox.
+            </p>
+          </div>
+          <div class="attacks-banner-actions">
+            <button class="btn-danger" id="btn-execute-all-attacks">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              Run Full Attack Suite
+            </button>
+            <button class="btn-cyan" id="btn-run-contamination-test">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Test Cross-Session Isolation
+            </button>
+          </div>
+        </div>
+
+        <!-- Attack Results Matrix -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+              <h3>Curated Payloads & Evaluation Results</h3>
+            </div>
+            <div class="suite-status-tag" id="suite-summary-tag">
+              11 Curated Payloads Ready
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-container">
+              <table class="data-table" id="attacks-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Attack Name</th>
+                    <th>Category</th>
+                    <th>Source</th>
+                    <th>IOC Indicators</th>
+                    <th>Evaluation Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="attacks-table-body">
+                  <!-- Populated by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest Attack Output / Contamination Card -->
+        <div class="card mt-4" id="attack-run-output-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <h3>Execution Log & Live Adversarial Report</h3>
+            </div>
+            <button class="btn-action-small" id="btn-clear-attack-log">Clear Log</button>
+          </div>
+          <div class="card-body">
+            <div class="terminal-box" id="attack-terminal-output">
+[READY] Attack harness ready. Click "Run Full Attack Suite" or trigger individual payloads to inspect model containment and cryptographic audit writes in real time.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: SECURITY TOPOLOGY ==================== -->
+    <section class="tab-pane" id="tab-topology">
+      <div class="topology-view">
+        <div class="card mb-4">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+              <h3>Active Isolation Architecture & Trust Boundaries</h3>
+            </div>
+            <span class="badge green">Zero Lateral Traversal</span>
+          </div>
+          <div class="card-body">
+            <p class="topology-intro">
+              The Bayora Sandbox decouples adversarial execution (Red-Team) and defensive engineering (Blue-Team) into segregated Docker network namespaces with restrictive Linux Seccomp filters, strict cgroup resource budgets, and read-only filesystems. The <strong>LLM Gateway</strong> is the single cryptographic chokepoint.
+            </p>
+
+            <!-- Interactive Architecture Map -->
+            <div class="architecture-diagram">
+              
+              <!-- Red Team Container Node -->
+              <div class="node-box node-red">
+                <div class="node-header">
+                  <span class="node-badge red">CONTAINER</span>
+                  <h4>bayora-redteam</h4>
+                </div>
+                <div class="node-body">
+                  <div class="node-attr"><span>IP Subnet:</span> <code>172.28.10.0/24</code></div>
+                  <div class="node-attr"><span>Seccomp:</span> <code>seccomp-redteam.json</code></div>
+                  <div class="node-attr"><span>cgroups:</span> <code>1 CPU / 512MB RAM</code></div>
+                  <div class="node-attr"><span>Rootless:</span> <code>UID 10001 (sandboxuser)</code></div>
+                  <div class="node-attr"><span>Filesystem:</span> <code>read_only: true</code></div>
+                </div>
+                <div class="node-footer">
+                  <span class="status-tag online">Isolated Network</span>
+                </div>
+              </div>
+
+              <!-- Gateway Connector Arrow -->
+              <div class="diagram-connector">
+                <div class="connector-line red-line"></div>
+                <div class="connector-label">X-Tenant-Key Auth</div>
+              </div>
+
+              <!-- LLM Gateway Node (Center) -->
+              <div class="node-box node-gateway">
+                <div class="node-header">
+                  <span class="node-badge cyan">SECURITY CHOKEPOINT</span>
+                  <h4>bayora-llm-gateway</h4>
+                </div>
+                <div class="node-body">
+                  <div class="node-attr"><span>Port:</span> <code>:8000 (FastAPI/Uvicorn)</code></div>
+                  <div class="node-attr"><span>Access Control:</span> <code>Phase 5 Keys Enforced</code></div>
+                  <div class="node-attr"><span>Audit Chain:</span> <code>SHA-256 JSONL Log</code></div>
+                  <div class="node-attr"><span>Anomaly Detect:</span> <code>Burst Rate Sliding Win</code></div>
+                  <div class="node-attr"><span>Networks:</span> <code>redteam, blueteam, client</code></div>
+                </div>
+                <div class="node-footer">
+                  <span class="status-tag primary">Active Chokepoint</span>
+                </div>
+              </div>
+
+              <!-- Blue Team Connector Arrow -->
+              <div class="diagram-connector">
+                <div class="connector-line blue-line"></div>
+                <div class="connector-label">Bearer Token Auth</div>
+              </div>
+
+              <!-- Blue Team Container Node -->
+              <div class="node-box node-blue">
+                <div class="node-header">
+                  <span class="node-badge blue">CONTAINER</span>
+                  <h4>bayora-blueteam</h4>
+                </div>
+                <div class="node-body">
+                  <div class="node-attr"><span>IP Subnet:</span> <code>172.28.20.0/24</code></div>
+                  <div class="node-attr"><span>Seccomp:</span> <code>seccomp-blueteam.json</code></div>
+                  <div class="node-attr"><span>cgroups:</span> <code>1 CPU / 512MB RAM</code></div>
+                  <div class="node-attr"><span>Rootless:</span> <code>UID 10001 (sandboxuser)</code></div>
+                  <div class="node-attr"><span>Filesystem:</span> <code>read_only: true</code></div>
+                </div>
+                <div class="node-footer">
+                  <span class="status-tag online">Isolated Network</span>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Downstream Client LLM Node -->
+            <div class="diagram-downstream">
+              <div class="downstream-connector">
+                <div class="connector-vertical-line"></div>
+                <span class="connector-pill">Internal Isolated Network (172.28.30.0/24) &bull; No Host WAN Route</span>
+              </div>
+              <div class="node-box node-client-llm">
+                <div class="node-header">
+                  <span class="node-badge purple">BLACK-BOX RUNNER</span>
+                  <h4>bayora-client-llm (Ollama)</h4>
+                </div>
+                <div class="node-body">
+                  <div class="node-attr"><span>Target Model:</span> <code>qwen2.5-coder:3b</code></div>
+                  <div class="node-attr"><span>Inference API:</span> <code>http://client-llm:11434/api/generate</code></div>
+                  <div class="node-attr"><span>Routing:</span> <code>client-net ONLY (Gateway is sole ingress)</code></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Threat Containment Matrix -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+              <h3>Security Guarantee & Enforcement Verification</h3>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Security Property</th>
+                    <th>Threat Mitigated</th>
+                    <th>Enforcement Mechanism</th>
+                    <th>Automated Verification</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Cross-Tenant Lateral Isolation</strong></td>
+                    <td>Adversarial container attacking or snooping blue-team defense scripts</td>
+                    <td>Docker bridge namespaces without routing; strictly isolated subnets</td>
+                    <td><span class="badge green">Pass (CI Unit & Docker Spec)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Direct Ollama Bypass</strong></td>
+                    <td>Red-team evading audit chokepoint by querying model directly</td>
+                    <td><code>client-net</code> is private internal subnet; no redteam membership</td>
+                    <td><span class="badge green">Pass (Negative route test)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Header Forgery / Impersonation</strong></td>
+                    <td>Red team spoofing <code>X-Source-Tenant: blue-team</code></td>
+                    <td>Gateway checks cryptographic key ownership vs claimed header</td>
+                    <td><span class="badge green">Pass (TestGateway 403 test)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Non-Repudiation & Audit Tampering</strong></td>
+                    <td>Attacker or rogue insider altering past prompt logs</td>
+                    <td>SHA-256 hash-chaining; each block seals prior block digest</td>
+                    <td><span class="badge green">Pass (verify_chain audit check)</span></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Privilege Escalation</strong></td>
+                    <td>Container escape via ptrace, kernel exploit, mount syscalls</td>
+                    <td>Seccomp default-deny filters, cap_drop ALL, rootless user 10001</td>
+                    <td><span class="badge green">Pass (Seccomp syntax & rule test)</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 5: LIVE DISPATCH TERMINAL ==================== -->
+    <section class="tab-pane" id="tab-terminal">
+      <div class="terminal-view-grid">
+        <!-- Interactive Prompt Dispatch Form -->
+        <div class="card dispatch-form-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+              <h3>Interactive Security Gateway Dispatcher</h3>
+            </div>
+          </div>
+          <div class="card-body">
+            <form id="dispatch-form">
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="tenant-select">Tenant Identity (Header)</label>
+                  <select id="tenant-select" class="form-control">
+                    <option value="red-team">red-team (Adversarial Evaluator)</option>
+                    <option value="blue-team">blue-team (Defensive Engineer)</option>
+                    <option value="evil-attacker">evil-attacker (Unauthorized Attacker)</option>
+                  </select>
+                </div>
+
+                <div class="form-group flex-1">
+                  <label for="api-key-input">Authentication Credential (X-Tenant-Key)</label>
+                  <input type="text" id="api-key-input" class="form-control font-mono" value="bayora-redteam-live-secret-key-9f8a2" placeholder="Secret tenant key...">
+                </div>
+              </div>
+
+              <div class="preset-buttons-row">
+                <span class="preset-label">Quick Presets:</span>
+                <button type="button" class="preset-chip" id="preset-valid-red">Valid Red-Team</button>
+                <button type="button" class="preset-chip" id="preset-valid-blue">Valid Blue-Team</button>
+                <button type="button" class="preset-chip" id="preset-spoof">Spoofed Header (Attack)</button>
+                <button type="button" class="preset-chip" id="preset-burst">Simulate Burst Attack</button>
+              </div>
+
+              <div class="form-group mt-3">
+                <label for="prompt-input">Prompt Payload</label>
+                <textarea id="prompt-input" rows="4" class="form-control font-mono" placeholder="Enter prompt to dispatch through the isolated gateway...">Explain the concept of container isolation namespaces in Linux.</textarea>
+              </div>
+
+              <div class="form-actions mt-3">
+                <button type="submit" class="btn-primary" id="btn-submit-prompt">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                  Dispatch to Gateway
+                </button>
+                <button type="button" class="btn-secondary" id="btn-clear-terminal">Clear Results</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Gateway Response & Chain Proof Card -->
+        <div class="card response-card">
+          <div class="card-header">
+            <div class="card-title-group">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <h3>Gateway Intermediary Response</h3>
+            </div>
+            <span class="badge" id="response-status-badge">Awaiting Query</span>
+          </div>
+          <div class="card-body">
+            <div class="response-meta-bar" id="response-meta-bar">
+              <span>Status: <strong id="res-meta-code">-</strong></span>
+              <span>Latency: <strong id="res-meta-latency">-</strong></span>
+              <span>Model: <strong id="res-meta-model">-</strong></span>
+            </div>
+            <div class="response-output-box" id="response-output-box">
+Select or type a prompt above and click "Dispatch to Gateway".
+The gateway will authenticate the tenant, forward to Ollama (or return an isolation rejection), record the cryptographic SHA-256 block into audit/log.jsonl, and display the live result here.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Block Inspection Modal -->
+  <div class="modal-overlay hidden" id="block-modal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-block-title">Audit Block Details</h3>
+        <button class="btn-close" id="btn-close-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="json-viewer" id="modal-json-content">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btn-copy-modal-json">Copy JSON</button>
+        <button class="btn-primary" id="btn-dismiss-modal">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Dashboard JavaScript Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

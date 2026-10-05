@@ -34,3 +34,9 @@ ollama-data/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Frontend Dependencies & Builds
+node_modules/
+frontend/node_modules/
+frontend/dist/
+

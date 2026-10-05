@@ -2,13 +2,45 @@ name: Bayora Sandbox CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["**"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["**"]
 
 jobs:
+  lint-and-validate:
+    name: Lint, Syntax & Static Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8
+
+      - name: Syntax & Compilation Check
+        run: |
+          python -m py_compile gateway/main.py audit/chain.py audit/verify.py attacks/run-attack.py run_tests.py
+
+      - name: Python Code Quality (flake8 syntax & critical errors)
+        run: |
+          # Stop build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude=.venv
+
+      - name: Validate Seccomp Profiles & Docker Compose Spec
+        run: |
+          python -m unittest isolation/test_isolation.py
+
   test-and-verify:
-    name: Unit Tests, Isolation Checks & Audit Verification
+    name: Test Suite & Audit Verification (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -29,28 +61,34 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Syntax & Compilation Check
+      - name: Run Unified Test Runner
         run: |
-          python -m py_compile gateway/main.py audit/chain.py audit/verify.py attacks/run-attack.py
-
-      - name: Run Complete Test Suite (Audit, Gateway, Isolation, Attacks)
-        run: |
-          python -c "
-          import unittest, sys
-          loader = unittest.TestLoader()
-          suite = unittest.TestSuite()
-          for d in ['audit', 'gateway', 'isolation', 'attacks']:
-              suite.addTests(loader.discover(d, pattern='test_*.py', top_level_dir='.'))
-          runner = unittest.TextTestRunner(verbosity=2)
-          result = runner.run(suite)
-          if not result.wasSuccessful():
-              sys.exit(1)
-          "
+          python run_tests.py
 
       - name: Verify Tamper Detection CLI
         run: |
           python audit/verify.py
 
-      - name: Validate Seccomp Profiles & Docker Compose Spec
-        run: |
-          python -m unittest isolation/test_isolation.py
+  frontend-build:
+    name: Vite React Frontend Build & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Vite Dashboard Bundle
+        working-directory: frontend
+        run: npm run build
+
+
