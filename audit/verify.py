@@ -24,7 +24,7 @@ def print_banner():
 
 def inspect_and_verify(log_path: Optional[str] = None) -> bool:
     if log_path is None:
-        log_path = DEFAULT_LOG_PATH
+        log_path = os.getenv("BAYORA_AUDIT_LOG", DEFAULT_LOG_PATH)
 
     print_banner()
     print(f"[*] Target Log: {os.path.abspath(log_path)}")
@@ -68,6 +68,6 @@ def inspect_and_verify(log_path: Optional[str] = None) -> bool:
 
 
 if __name__ == "__main__":
-    target = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_LOG_PATH
+    target = sys.argv[1] if len(sys.argv) > 1 else os.getenv("BAYORA_AUDIT_LOG", DEFAULT_LOG_PATH)
     success = inspect_and_verify(target)
     sys.exit(0 if success else 1)

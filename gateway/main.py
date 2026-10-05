@@ -35,7 +35,7 @@ if os.path.exists(env_file):
 # Configuration from environment
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://client-llm:11434/api/generate")
 MODEL_NAME = os.getenv("MODEL_NAME", "qwen2.5-coder:3b")
-ALLOWED_TENANTS = set(os.getenv("ALLOWED_TENANTS", "red-team,blue-team").split(","))
+ALLOWED_TENANTS = {t.strip().lower() for t in os.getenv("ALLOWED_TENANTS", "red-team,blue-team").split(",") if t.strip()}
 
 # Tenant Authentication Secrets (Phase 5 Access Control)
 TENANT_API_KEYS = {
